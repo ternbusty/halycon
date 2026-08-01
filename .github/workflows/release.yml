@@ -141,7 +141,7 @@ jobs:
         run: copy target\${{ matrix.target }}\release\monaka.exe ${{ matrix.artifact }}
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ matrix.artifact }}
           tag_name: ${{ needs.release-please.outputs.tag_name }}
