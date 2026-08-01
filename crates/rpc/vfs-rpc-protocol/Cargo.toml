@@ -10,7 +10,7 @@ repository = "https://github.com/ternbusty/monaka-fs"
 prost = "0.13"
 
 [build-dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
 
 [dev-dependencies]
 anyhow = "1.0"
