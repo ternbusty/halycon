@@ -46,19 +46,19 @@ jobs:
       # shares the `build-` prefix with Build so its `needs: build`
       # warmup actually warms.
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-lint-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-git-lint-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-lint-${{ hashFiles('**/Cargo.lock') }}
@@ -83,13 +83,13 @@ jobs:
           targets: wasm32-wasip2
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-build-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-git-build-${{ hashFiles('**/Cargo.lock') }}
@@ -99,7 +99,7 @@ jobs:
       # warmup steps below populate every directory so the e2e job's
       # pre-flight is cache-hit-only relinks.
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             target
@@ -175,19 +175,19 @@ jobs:
         uses: dtolnay/rust-toolchain@1.92.0
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-test-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-git-test-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-test-${{ hashFiles('**/Cargo.lock') }}
@@ -237,13 +237,13 @@ jobs:
       # restores). Saving under the same key here is a no-op when the
       # restore was an exact hit.
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-build-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-git-build-${{ hashFiles('**/Cargo.lock') }}
@@ -254,7 +254,7 @@ jobs:
       # the e2e job's pre-flight a relink instead of a full wasmtime + AWS
       # SDK compile from scratch.
       - name: Cache cargo build target
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             target
@@ -273,7 +273,7 @@ jobs:
       # the resulting binary keyed on its pinned version.
       - name: Cache wac-cli binary
         id: cache-wac
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/bin/wac
           key: ${{ runner.os }}-wac-${{ env.WAC_VERSION }}
@@ -284,7 +284,7 @@ jobs:
 
       - name: Cache wasmtime binary
         id: cache-wasmtime
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.wasmtime
           key: ${{ runner.os }}-wasmtime-${{ env.WASMTIME_VERSION }}
