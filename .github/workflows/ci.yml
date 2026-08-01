@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.92.0
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
 
@@ -34,7 +34,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.92.0
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
 
@@ -76,10 +76,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       # Match the e2e job's pin so the warmed cargo cache is reusable
-      # across both jobs.
+      # across both jobs. The ref stays @stable (Dependabot proposes
+      # bumps to unreleased Rust versions for this action's version
+      # refs); the actual pin lives in the `toolchain` input.
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.92.0
+        uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.92.0
           targets: wasm32-wasip2
 
       - name: Cache cargo registry
@@ -172,7 +175,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.92.0
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo registry
         uses: actions/cache@v6
@@ -226,9 +229,13 @@ jobs:
       # panic on close: "cannot use two types with this resource type".
       # The same composition built with 1.92.0 (or on macOS) runs cleanly,
       # so pin until rustc/wit-bindgen sort out the new imports upstream.
+      # The ref stays @stable (Dependabot proposes bumps to unreleased
+      # Rust versions for this action's version refs); the actual pin
+      # lives in the `toolchain` input.
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.92.0
+        uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.92.0
           targets: wasm32-wasip2
 
       # Share the `build-` cache prefix with the Build job (we depend on
