@@ -54,7 +54,7 @@ jobs:
       releases_created: ${{ steps.release.outputs['crates/tools/monaka-cli--release_created'] }}
       tag_name: ${{ steps.release.outputs['crates/tools/monaka-cli--tag_name'] }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
