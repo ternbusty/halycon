@@ -282,7 +282,7 @@ where
             *cell.borrow_mut() = Some(RpcState::new());
         }
         let borrow = cell.borrow();
-        f(borrow.as_ref().unwrap())
+        f(borrow.as_ref().expect("RPC state initialized above"))
     })
 }
 

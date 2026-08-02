@@ -36,6 +36,33 @@ impl SyncHooks for NoOpSyncHooks {
     fn on_open(&self, _path: &str) {}
 }
 
+/// Runs `task` on a dedicated thread with its own tokio runtime and blocks
+/// until it completes. A separate thread is used to avoid blocking the main
+/// runtime. `description` labels error logs when the thread fails.
+#[cfg(feature = "s3-sync")]
+fn run_sync_task<F, Fut>(description: &str, task: F)
+where
+    F: FnOnce() -> Fut + Send + 'static,
+    Fut: std::future::Future<Output = ()>,
+{
+    let handle = std::thread::spawn(move || {
+        let rt = match tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+        {
+            Ok(rt) => rt,
+            Err(e) => {
+                log::error!("[sync] Failed to build tokio runtime: {}", e);
+                return;
+            }
+        };
+        rt.block_on(task());
+    });
+    if let Err(e) = handle.join() {
+        log::error!("[sync] {} thread panicked: {:?}", description, e);
+    }
+}
+
 /// S3 sync hooks implementation
 #[cfg(feature = "s3-sync")]
 pub struct S3SyncHooks {
@@ -78,31 +105,24 @@ impl S3SyncHooks {
             metadata_sync,
         }
     }
+
+    /// RealTime mode: sync a file to S3 immediately and wait for completion
+    fn sync_file_blocking(&self, path: &str) {
+        let sync = self.sync_manager.clone();
+        let path = path.to_string();
+        run_sync_task("RealTime sync", move || async move {
+            if let Err(e) = sync.sync_file_now(&path).await {
+                log::error!("[sync] RealTime sync failed for {}: {}", path, e);
+            }
+        });
+    }
 }
 
 #[cfg(feature = "s3-sync")]
 impl SyncHooks for S3SyncHooks {
     fn on_write(&self, path: &str) {
         if self.sync_manager.is_realtime() {
-            // RealTime mode: sync immediately and wait for S3 completion
-            // Use a new thread with its own tokio runtime to avoid blocking the main runtime
-            let sync = self.sync_manager.clone();
-            let path = path.to_string();
-            let handle = std::thread::spawn(move || {
-                let rt = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
-                rt.block_on(async {
-                    if let Err(e) = sync.sync_file_now(&path).await {
-                        log::error!("[sync] RealTime sync failed for {}: {}", path, e);
-                    }
-                });
-            });
-            // Wait for S3 sync to complete before returning
-            if let Err(e) = handle.join() {
-                log::error!("[sync] RealTime sync thread panicked: {:?}", e);
-            }
+            self.sync_file_blocking(path);
         } else {
             // Batch mode: enqueue for later
             self.sync_manager.enqueue_upload(path.to_string());
@@ -115,24 +135,7 @@ impl SyncHooks for S3SyncHooks {
 
     fn on_truncate(&self, path: &str) {
         if self.sync_manager.is_realtime() {
-            // RealTime mode: sync immediately and wait for S3 completion
-            let sync = self.sync_manager.clone();
-            let path = path.to_string();
-            let handle = std::thread::spawn(move || {
-                let rt = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
-                rt.block_on(async {
-                    if let Err(e) = sync.sync_file_now(&path).await {
-                        log::error!("[sync] RealTime sync failed for {}: {}", path, e);
-                    }
-                });
-            });
-            // Wait for S3 sync to complete before returning
-            if let Err(e) = handle.join() {
-                log::error!("[sync] RealTime sync thread panicked: {:?}", e);
-            }
+            self.sync_file_blocking(path);
         } else {
             // Batch mode: enqueue for later
             self.sync_manager.enqueue_upload(path.to_string());
@@ -141,54 +144,35 @@ impl SyncHooks for S3SyncHooks {
 
     fn on_read(&self, path: &str) {
         if self.read_from_s3 {
-            // Refresh from S3 before read
+            // Refresh from S3 before read, waiting for completion
             let sync = self.sync_manager.clone();
             let path = path.to_string();
-            let handle = std::thread::spawn(move || {
-                let rt = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
-                rt.block_on(async {
-                    if let Err(e) = sync.refresh_file_from_s3(&path).await {
-                        log::error!("[sync] S3 refresh failed for {}: {}", path, e);
-                    }
-                });
+            run_sync_task("S3 refresh", move || async move {
+                if let Err(e) = sync.refresh_file_from_s3(&path).await {
+                    log::error!("[sync] S3 refresh failed for {}: {}", path, e);
+                }
             });
-            // Wait for S3 refresh to complete before returning
-            if let Err(e) = handle.join() {
-                log::error!("[sync] S3 refresh thread panicked: {:?}", e);
-            }
         }
     }
 
     fn on_open(&self, path: &str) {
         if self.metadata_sync {
-            // Check S3 metadata and refresh if changed (like s3fs HEAD request)
+            // Check S3 metadata and refresh if changed (like s3fs HEAD request),
+            // waiting for completion
             let sync = self.sync_manager.clone();
             let path = path.to_string();
-            let handle = std::thread::spawn(move || {
-                let rt = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
-                rt.block_on(async {
-                    match sync.check_and_refresh_from_s3(&path).await {
-                        Ok(refreshed) => {
-                            if refreshed {
-                                log::debug!("[sync] File refreshed on open: {}", path);
-                            }
-                        }
-                        Err(e) => {
-                            log::error!("[sync] S3 metadata check failed for {}: {}", path, e);
+            run_sync_task("S3 metadata check", move || async move {
+                match sync.check_and_refresh_from_s3(&path).await {
+                    Ok(refreshed) => {
+                        if refreshed {
+                            log::debug!("[sync] File refreshed on open: {}", path);
                         }
                     }
-                });
+                    Err(e) => {
+                        log::error!("[sync] S3 metadata check failed for {}: {}", path, e);
+                    }
+                }
             });
-            // Wait for metadata check to complete before returning
-            if let Err(e) = handle.join() {
-                log::error!("[sync] S3 metadata check thread panicked: {:?}", e);
-            }
         }
     }
 }

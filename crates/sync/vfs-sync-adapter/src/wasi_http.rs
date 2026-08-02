@@ -360,12 +360,7 @@ fn convert_method(method: http::Method) -> Result<wasi_http::Method, ParseError>
 fn convert_headers(headers: http::HeaderMap) -> Result<wasi_http::Fields, ParseError> {
     let entries = headers
         .iter()
-        .map(|(name, value)| {
-            (
-                name.to_string(),
-                value.to_str().unwrap().as_bytes().to_vec(),
-            )
-        })
+        .map(|(name, value)| (name.to_string(), value.as_bytes().to_vec()))
         .collect::<Vec<_>>();
 
     wasi_http::Fields::from_list(&entries).map_err(|err| ParseError::new(err.to_string()))
