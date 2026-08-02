@@ -222,7 +222,9 @@ where
     ensure_init();
     VFS_STATE.with(|cell| {
         let mut borrow = cell.borrow_mut();
-        f(borrow.as_mut().unwrap())
+        f(borrow
+            .as_mut()
+            .expect("VFS state initialized by ensure_init"))
     })
 }
 
@@ -231,7 +233,12 @@ where
 // borrow alive while operating on the filesystem.
 fn get_vfs_fs() -> Rc<RefCell<Fs<SystemTimeProvider>>> {
     ensure_init();
-    VFS_FS.with(|cell| cell.borrow().as_ref().unwrap().clone())
+    VFS_FS.with(|cell| {
+        cell.borrow()
+            .as_ref()
+            .expect("VFS_FS initialized by ensure_init")
+            .clone()
+    })
 }
 
 // Convert fs-core error to WASI error code
