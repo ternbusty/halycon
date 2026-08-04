@@ -404,10 +404,9 @@ pub fn add_to_linker_with_vfs(
     bindings::sync::filesystem::types::add_to_linker::<T, HasSelf<VfsHostState>>(linker, |t| t)?;
     bindings::sync::filesystem::preopens::add_to_linker::<T, HasSelf<VfsHostState>>(linker, |t| t)?;
 
-    // Interfaces requiring LinkOptions
-    let exit_options = bindings::cli::exit::LinkOptions::default();
-    bindings::cli::exit::add_to_linker::<T, WasiCli>(linker, &exit_options, T::cli)?;
+    bindings::cli::exit::add_to_linker::<T, WasiCli>(linker, T::cli)?;
 
+    // Interfaces requiring LinkOptions
     let network_options = bindings::sockets::network::LinkOptions::default();
     bindings::sockets::network::add_to_linker::<T, WasiSockets>(
         linker,
