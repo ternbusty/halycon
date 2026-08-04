@@ -21,7 +21,7 @@ s3-sync = ["dep:vfs-sync-host", "dep:tokio"]
 fs-core = { version = "0.2.5", path = "../../core/fs-core", features = ["thread-safe"] }
 wasmtime = "44.0.1"
 wasmtime-wasi = "44.0.1"
-wasmtime-wasi-io = "44.0.1"
+wasmtime-wasi-io = "46.0.2"
 anyhow = "1.0"
 bytes = "1.9"
 async-trait = "0.1"
