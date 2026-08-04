@@ -82,7 +82,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.92.0
+          toolchain: 1.94.0
           targets: wasm32-wasip2
 
       - name: Cache cargo registry
@@ -222,20 +222,22 @@ jobs:
       - name: Install protoc
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler netcat-openbsd
 
-      # Pin to rustc 1.92.0. The 1.95.0 wasm32-wasip2 std added imports
+      # Pin to rustc 1.94.0. The 1.95.0 wasm32-wasip2 std added imports
       # to `wasi:cli/terminal-{input,output,stdin,stdout,stderr}@0.2.6`
       # that conflict with `wac plug`'s resource-type unification when
       # the rpc-adapter is composed with demo apps, producing a runtime
       # panic on close: "cannot use two types with this resource type".
-      # The same composition built with 1.92.0 (or on macOS) runs cleanly,
-      # so pin until rustc/wit-bindgen sort out the new imports upstream.
+      # The same composition built with pre-1.95 toolchains (or on
+      # macOS) runs cleanly, so stay below 1.95 until rustc/wit-bindgen
+      # sort out the new imports upstream. 1.94.0 is the floor because
+      # the wasmtime 46 crates require it.
       # The ref stays @stable (Dependabot proposes bumps to unreleased
       # Rust versions for this action's version refs); the actual pin
       # lives in the `toolchain` input.
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.92.0
+          toolchain: 1.94.0
           targets: wasm32-wasip2
 
       # Share the `build-` cache prefix with the Build job (we depend on
