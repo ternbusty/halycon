@@ -88,7 +88,14 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-wasip2,${{ matrix.target }}
+          targets: ${{ matrix.target }}
+
+      # The bundled wasm32-wasip2 (guest) artifacts must be built with
+      # rustc 1.92.0. Newer toolchains' wasip2 std adds terminal-interface
+      # imports that break `wac plug` composition of the rpc-adapter at
+      # runtime. See the E2E job in ci.yml for the full rationale.
+      - name: Install guest Rust toolchain
+        run: rustup toolchain install 1.92.0 --profile minimal --target wasm32-wasip2 --no-self-update
 
       - name: Install protoc
         uses: arduino/setup-protoc@v3
@@ -107,25 +114,25 @@ jobs:
       - name: Build WASM (S3 sync variants)
         if: runner.os != 'Windows'
         run: |
-          cargo build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
+          cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
           mkdir -p target/wasm32-wasip2/s3-release
           cp target/wasm32-wasip2/release/vfs_adapter.wasm target/wasm32-wasip2/s3-release/vfs_adapter.wasm
-          cargo build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
+          cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
           cp target/wasm32-wasip2/release/vfs_rpc_server.wasm target/wasm32-wasip2/s3-release/vfs_rpc_server.wasm
 
       - name: Build WASM (non-S3 variants)
         if: runner.os != 'Windows'
-        run: cargo build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
+        run: cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
 
       - name: Build WASM (Windows)
         if: runner.os == 'Windows'
         run: |
-          cargo build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
+          cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
           New-Item -ItemType Directory -Force -Path target/wasm32-wasip2/s3-release
           Copy-Item target/wasm32-wasip2/release/vfs_adapter.wasm target/wasm32-wasip2/s3-release/vfs_adapter.wasm
-          cargo build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
+          cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
           Copy-Item target/wasm32-wasip2/release/vfs_rpc_server.wasm target/wasm32-wasip2/s3-release/vfs_rpc_server.wasm
-          cargo build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
+          cargo +1.92.0 build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
 
       - name: Build CLI
         run: cargo build --release --target ${{ matrix.target }} -p monaka
