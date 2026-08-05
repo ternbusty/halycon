@@ -223,17 +223,18 @@ jobs:
       WASMTIME_VERSION: v39.0.1
       WAC_VERSION: 0.10.0
       # Build all wasm32-wasip2 (guest) artifacts with rustc 1.92.0.
-      # Newer toolchains' wasip2 std (observed with 1.94.0 and 1.95.0)
-      # added imports to `wasi:cli/terminal-{input,output,...}@0.2.6`
-      # that conflict with `wac plug`'s resource-type unification when
-      # the rpc-adapter is composed with demo apps, producing a runtime
-      # panic on close: "cannot use two types with this resource type".
-      # The same composition built with 1.92.0 (or on macOS) runs
-      # cleanly, so guests stay on 1.92.0 until rustc/wit-bindgen sort
-      # out the new imports upstream. Native (host) builds use the
-      # default toolchain below, which must be >=1.94.0 because the
-      # wasmtime 46 crates require it. Makefile and scripts/e2e.sh pick
-      # WASM_CARGO up from the environment.
+      # Apps built with the 1.94.0-1.96.0 wasip2 std panic at runtime on
+      # Linux when composed with the rpc-adapter and closing a file:
+      # "cannot use two types with this resource type". Verified
+      # empirically per app toolchain (1.92 OK, 1.94/1.95/1.96 panic,
+      # 1.97 OK; macOS hosts unaffected); the adapter's own toolchain
+      # does not matter. Guests cannot move to 1.97+ yet because that
+      # std pulls `wasi:http@0.2.9` imports which fail to merge with the
+      # vendored 0.2.6 WIT at component-link time, so everything stays
+      # on 1.92.0. Native (host) builds use the default toolchain below,
+      # which must be >=1.94.0 because the wasmtime 46 crates require
+      # it. Makefile and scripts/e2e.sh pick WASM_CARGO up from the
+      # environment.
       WASM_CARGO: cargo +1.92.0
     steps:
       - uses: actions/checkout@v7

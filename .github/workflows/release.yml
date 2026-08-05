@@ -90,10 +90,11 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      # The bundled wasm32-wasip2 (guest) artifacts must be built with
-      # rustc 1.92.0. Newer toolchains' wasip2 std adds terminal-interface
-      # imports that break `wac plug` composition of the rpc-adapter at
-      # runtime. See the E2E job in ci.yml for the full rationale.
+      # Build the bundled wasm32-wasip2 (guest) artifacts with rustc
+      # 1.92.0, matching the guest toolchain policy in ci.yml. The
+      # runtime panic described there is triggered by the composed app's
+      # toolchain rather than the adapter's, but keeping every shipped
+      # guest on the known-good toolchain avoids untested combinations.
       - name: Install guest Rust toolchain
         run: rustup toolchain install 1.92.0 --profile minimal --target wasm32-wasip2 --no-self-update
 
