@@ -3,6 +3,11 @@
 .PHONY: build build-release build-all build-native build-wasm build-wasm-release build-cli clean help
 .PHONY: check-prereqs install-prereqs info e2e
 
+# Cargo invocation for wasm32-wasip2 (guest) builds. CI overrides this to
+# pin an older toolchain for guests (see .github/workflows/ci.yml); local
+# builds use the default toolchain.
+WASM_CARGO ?= cargo
+
 # =============================================================================
 # Library
 # =============================================================================
@@ -32,7 +37,7 @@ build-native:
 # Build all WASM packages
 build-wasm:
 	@echo "Building WASM packages..."
-	@cargo build --target wasm32-wasip2 \
+	@$(WASM_CARGO) build --target wasm32-wasip2 \
 		-p vfs-adapter \
 		-p rpc-adapter \
 		-p vfs-rpc-server
@@ -41,7 +46,7 @@ build-wasm:
 # Build all WASM packages (release)
 build-wasm-release:
 	@echo "Building WASM packages (release)..."
-	@cargo build --release --target wasm32-wasip2 \
+	@$(WASM_CARGO) build --release --target wasm32-wasip2 \
 		-p vfs-adapter \
 		-p rpc-adapter \
 		-p vfs-rpc-server
@@ -51,14 +56,14 @@ build-wasm-release:
 build-cli:
 	@echo "=== Building WASM components for CLI ==="
 	@echo "Building vfs-adapter (S3 sync)..."
-	@cargo build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
+	@$(WASM_CARGO) build --release --target wasm32-wasip2 -p vfs-adapter --features s3-sync
 	@mkdir -p target/wasm32-wasip2/s3-release
 	@cp target/wasm32-wasip2/release/vfs_adapter.wasm target/wasm32-wasip2/s3-release/vfs_adapter.wasm
 	@echo "Building vfs-rpc-server (S3 sync)..."
-	@cargo build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
+	@$(WASM_CARGO) build --release --target wasm32-wasip2 -p vfs-rpc-server --features s3-sync
 	@cp target/wasm32-wasip2/release/vfs_rpc_server.wasm target/wasm32-wasip2/s3-release/vfs_rpc_server.wasm
 	@echo "Building vfs-adapter, rpc-adapter, vfs-rpc-server (no S3)..."
-	@cargo build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
+	@$(WASM_CARGO) build --release --target wasm32-wasip2 -p vfs-adapter -p rpc-adapter -p vfs-rpc-server
 	@echo "=== Building monaka CLI ==="
 	@cargo build --release -p monaka
 	@echo "CLI built: target/release/monaka"

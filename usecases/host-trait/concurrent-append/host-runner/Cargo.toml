@@ -8,8 +8,8 @@ edition = "2021"
 
 [dependencies]
 # WASM runtime
-wasmtime = { version = "44.0.1", features = ["component-model"] }
-wasmtime-wasi = "44.0.1"
+wasmtime = { version = "46.0.2", features = ["component-model"] }
+wasmtime-wasi = "46.0.2"
 
 # VFS host implementation
 vfs-host = { path = "../../../../crates/hosts/vfs-host" }
