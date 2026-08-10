@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/ternbusty/monaka-fs/compare/rpc-adapter-v0.2.5...rpc-adapter-v0.3.0) (2026-08-10)
+
+
+### Features
+
+* update vendored WASI WIT to 0.2.9 and fix adapter resource handling ([#88](https://github.com/ternbusty/monaka-fs/issues/88)) ([838e31a](https://github.com/ternbusty/monaka-fs/commit/838e31a14fca6a945855b31c9fc9bf70fcfd2b76))
+
 ## [0.2.5](https://github.com/ternbusty/monaka-fs/compare/rpc-adapter-v0.2.4...rpc-adapter-v0.2.5) (2026-05-13)
 
 
