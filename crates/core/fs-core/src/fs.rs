@@ -448,7 +448,15 @@ impl<T: TimeProvider> Fs<T> {
         let file_inode = match self.find_inode(&current_inode, filename) {
             Ok(inode) => inode,
             Err(FsError::NotFound) if flags & O_CREAT != 0 => {
-                self.create_inode(&current_inode, filename, false)?
+                match self.create_inode(&current_inode, filename, false) {
+                    Ok(inode) => inode,
+                    // Another thread created the file between find_inode and create_inode.
+                    // Without O_EXCL this is not an error; just open the existing file.
+                    Err(FsError::AlreadyExists) if flags & O_EXCL == 0 => {
+                        self.find_inode(&current_inode, filename)?
+                    }
+                    Err(e) => return Err(e),
+                }
             }
             Err(e) => return Err(e),
         };
@@ -529,7 +537,15 @@ impl<T: TimeProvider> Fs<T> {
         let file_inode = match self.find_inode(&current_inode, filename) {
             Ok(inode) => inode,
             Err(FsError::NotFound) if flags & O_CREAT != 0 => {
-                self.create_inode(&current_inode, filename, false)?
+                match self.create_inode(&current_inode, filename, false) {
+                    Ok(inode) => inode,
+                    // Another thread created the file between find_inode and create_inode.
+                    // Without O_EXCL this is not an error; just open the existing file.
+                    Err(FsError::AlreadyExists) if flags & O_EXCL == 0 => {
+                        self.find_inode(&current_inode, filename)?
+                    }
+                    Err(e) => return Err(e),
+                }
             }
             Err(e) => return Err(e),
         };
@@ -948,7 +964,14 @@ impl<T: TimeProvider> Fs<T> {
                     }
                     inode
                 }
-                Err(FsError::NotFound) => self.create_inode(&current_inode, comp, true)?,
+                Err(FsError::NotFound) => {
+                    match self.create_inode(&current_inode, comp, true) {
+                        Ok(inode) => inode,
+                        // Another thread created the directory between find and create.
+                        Err(FsError::AlreadyExists) => self.find_inode(&current_inode, comp)?,
+                        Err(e) => return Err(e),
+                    }
+                }
                 Err(e) => return Err(e),
             };
         }
