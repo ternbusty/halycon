@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/ternbusty/monaka-fs/compare/fs-core-v0.3.0...fs-core-v0.3.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **fs-core:** handle TOCTOU race in concurrent file creation ([#101](https://github.com/ternbusty/monaka-fs/issues/101)) ([60d9f90](https://github.com/ternbusty/monaka-fs/commit/60d9f9010d47969e8e734e15d52b952a38c2e2d3))
+
 ## [0.3.0](https://github.com/ternbusty/monaka-fs/compare/fs-core-v0.2.5...fs-core-v0.3.0) (2026-08-10)
 
 
